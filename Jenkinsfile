@@ -6,7 +6,7 @@ pipeline {
   }
 
     parameters {
-        string(name:'TAG_NAME',defaultValue: '',description:'')
+        string(name:'TAG_NAME',defaultValue: '',description:'版本号')
     }
 
     environment {
@@ -15,8 +15,9 @@ pipeline {
         KUBECONFIG_CREDENTIAL_ID = 'devops-kubeconfig'
         REGISTRY = 'docker.io'
         DOCKERHUB_NAMESPACE = 'enginewang'
+        DOCKER_REPO_NAME = 'springboot-devops'
         GITHUB_ACCOUNT = 'enginewang'
-        APP_NAME = 'springboot-devops'
+        GIT_REPO_NAME = 'springboot-devops'
     }
 
     stages {
@@ -38,10 +39,10 @@ pipeline {
             steps {
                 container ('maven') {
                     sh 'mvn clean package -DskipTests'
-                    sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER .'
+                    sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER .'
                     withCredentials([usernamePassword(passwordVariable : 'DOCKER_PASSWORD' ,usernameVariable : 'DOCKER_USERNAME' ,credentialsId : "$DOCKER_CREDENTIAL_ID" ,)]) {
                         sh 'echo "$DOCKER_PASSWORD" | docker login $REGISTRY -u "$DOCKER_USERNAME" --password-stdin'
-                        sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER'
+                        sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER'
                     }
                 }
             }
@@ -53,8 +54,8 @@ pipeline {
            }
            steps{
                 container ('maven') {
-                  sh 'docker tag  $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:latest '
-                  sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:latest '
+                  sh 'docker tag  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:latest '
+                  sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:latest '
                 }
            }
         }
@@ -89,10 +90,10 @@ pipeline {
                     sh 'git config --global user.email "kubesphere@yunify.com" '
                     sh 'git config --global user.name "kubesphere" '
                     sh 'git tag -a $TAG_NAME -m "$TAG_NAME" '
-                    sh 'git push https://$GIT_PASSWORD@github.com/$GITHUB_ACCOUNT/devops-java-sample.git --tags --ipv4'
+                    sh 'git push https://$GIT_PASSWORD@github.com/$GITHUB_ACCOUNT/$GIT_REPO_NAME.git --tags --ipv4'
                   }
-                sh 'docker tag  $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:$TAG_NAME '
-                sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:$TAG_NAME '
+                sh 'docker tag  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME '
+                sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME '
           }
           }
         }
