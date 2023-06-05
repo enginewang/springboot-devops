@@ -34,7 +34,7 @@ spec:
               value: js|html
             - name: CACHE_PUBLIC_EXPIRATION
               value: 3d
-          image: $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME
+          image: $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME
           readinessProbe:
             httpGet:
               path: /

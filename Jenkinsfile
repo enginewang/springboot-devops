@@ -13,8 +13,9 @@ pipeline {
         DOCKER_CREDENTIAL_ID = 'dockerhub-id'
         GITHUB_CREDENTIAL_ID = 'github-token'
         KUBECONFIG_CREDENTIAL_ID = 'devops-kubeconfig'
-        REGISTRY = 'docker.io'
-        DOCKERHUB_NAMESPACE = 'enginewang'
+        REGISTRY = "https://harbor.engine.wang"
+        HARBOR_NAMESPACE = "public"
+        HARBOR_CREDENTIAL = credentials('harbor-robot')
         DOCKER_REPO_NAME = 'springboot-devops'
         GITHUB_ACCOUNT = 'enginewang'
         GIT_REPO_NAME = 'springboot-devops'
@@ -39,10 +40,10 @@ pipeline {
             steps {
                 container ('maven') {
                     sh 'mvn clean package -DskipTests'
-                    sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER .'
+                    sh 'docker build -f Dockerfile -t $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER .'
                     withCredentials([usernamePassword(passwordVariable : 'DOCKER_PASSWORD' ,usernameVariable : 'DOCKER_USERNAME' ,credentialsId : "$DOCKER_CREDENTIAL_ID" ,)]) {
-                        sh 'echo "$DOCKER_PASSWORD" | docker login $REGISTRY -u "$DOCKER_USERNAME" --password-stdin'
-                        sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER'
+                        sh '''echo "$HARBOR_CREDENTIAL_PSW" | docker login $REGISTRY -u "robot$robot" --password-stdin'''
+                        sh 'docker push $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER'
                     }
                 }
             }
@@ -54,8 +55,8 @@ pipeline {
            }
            steps{
                 container ('maven') {
-                  sh 'docker tag  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:latest '
-                  sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:latest '
+                  sh 'docker tag $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:latest '
+                  sh 'docker push $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:latest '
                 }
            }
         }
@@ -92,8 +93,8 @@ pipeline {
                     sh 'git tag -a $TAG_NAME -m "$TAG_NAME" '
                     sh 'git push https://$GIT_PASSWORD@github.com/$GITHUB_ACCOUNT/$GIT_REPO_NAME.git --tags --ipv4'
                   }
-                sh 'docker tag  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME '
-                sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME '
+                sh 'docker tag $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME '
+                sh 'docker push $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:$TAG_NAME '
           }
           }
         }
