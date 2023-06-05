@@ -42,7 +42,7 @@ pipeline {
                     sh 'mvn clean package -DskipTests'
                     sh 'docker build -f Dockerfile -t $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER .'
                     withCredentials([usernamePassword(passwordVariable : 'DOCKER_PASSWORD' ,usernameVariable : 'DOCKER_USERNAME' ,credentialsId : "$DOCKER_CREDENTIAL_ID" ,)]) {
-                        sh '''echo "$HARBOR_CREDENTIAL_PSW" | docker login $REGISTRY -u "robot$robot" --password-stdin'''
+                        sh '''echo "$HARBOR_CREDENTIAL" | docker login $REGISTRY -u "robot$robot" --password-stdin'''
                         sh 'docker push $REGISTRY/$HARBOR_NAMESPACE/$DOCKER_REPO_NAME:SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER'
                     }
                 }
